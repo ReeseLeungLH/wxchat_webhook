@@ -1,0 +1,110 @@
+# Kubernetes 部署清单 for wxchat-webhook
+# 适用于 K3s 和标准的 Kubernetes 环境
+---
+# --- Deployment ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wxchat-webhook-deployment
+  namespace: infra
+  labels:
+    app: wxchat-webhook
+spec:
+  replicas: 1 # 初始副本数量
+  selector:
+    matchLabels:
+      app: wxchat-webhook
+  template:
+    metadata:
+      labels:
+        app: wxchat-webhook
+    spec:
+      containers:
+      - name: wxchat-webhook
+        image: wxchat_webhook:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          failureThreshold: 3
+        env:
+        - name: WECOM_CORPID
+          valueFrom:
+            secretKeyRef:
+              name: wxchat-webhook-secret
+              key: WECOM_CORPID
+        - name: WECOM_AGENTID
+          valueFrom:
+            secretKeyRef:
+              name: wxchat-webhook-secret
+              key: WECOM_AGENTID
+        - name: WECOM_APPSEC
+          valueFrom:
+            secretKeyRef:
+              name: wxchat-webhook-secret
+              key: WECOM_APPSEC
+        - name: AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: wxchat-webhook-secret
+              key: AUTH_TOKEN
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
+
+---
+
+# --- Service ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wxchat-webhook-service
+  namespace: infra
+spec:
+  type: ClusterIP
+  selector:
+    app: wxchat-webhook
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 5000
+---
+
+# --- Ingress ---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wxchat-webhook-ingress
+  namespace: infra
+  annotations:
+    konghq.com/protocols: "http,https"
+    konghq.com/strip-path: "true"
+spec:
+  ingressClassName: kong
+  rules:
+  - host: example.local
+    http:
+      paths:
+      - path: /webhook/wxchat/ops_push
+        pathType: Prefix
+        backend:
+          service:
+            name: wxchat-webhook-service
+            port:
+              number: 80

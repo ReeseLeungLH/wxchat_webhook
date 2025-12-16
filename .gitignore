@@ -1,0 +1,18 @@
+# 忽略配置文件
+config.yaml
+gitlab-cicd.json
+IMAGE_README.md
+
+# 忽略 Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 忽略虚拟环境
+venv/
+.venv/
+
+# 忽略 IDE/编辑器特定文件
+.vscode/
+.idea/

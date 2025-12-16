@@ -1,0 +1,11 @@
+# 企业微信公司ID
+WECOM_CORPID: "your_corpid_here"
+
+# 企业微信应用ID
+WECOM_AGENTID: "your_agentid_here"
+
+# 企业微信应用Secret
+WECOM_APPSEC: "your_appsec_here"
+
+# Webhook 鉴权 Token
+AUTH_TOKEN: "your_secret_auth_token"
